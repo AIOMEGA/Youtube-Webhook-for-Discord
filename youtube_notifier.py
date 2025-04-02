@@ -45,6 +45,10 @@ def notify_discord(title, url):
         print("❌ Failed to send webhook:", response.text)
 
 def main():
+    print("Webhook set:", bool(WEBHOOK_URL))
+    print("Gist ID set:", bool(GIST_ID))
+    print("Gist token set:", bool(GITHUB_TOKEN))
+    
     feed = feedparser.parse(FEED_URL)
     if not feed.entries:
         print("No videos found.")
