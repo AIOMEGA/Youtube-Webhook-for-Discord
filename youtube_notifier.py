@@ -35,33 +35,33 @@ def save_last_video_id(video_id):
     res = requests.patch(GIST_API_URL, headers=HEADERS, json=data)
     if res.status_code not in [200]:
         print("❌ Failed to update gist:", res.text)
+        pass
 
 def notify_discord(title, url):
     data = {
-        "content": f"📢 New video uploaded!\n**{title}**\n{url}"
+        "content": f"<@&1357010336791793805>\n📢 New video uploaded!\n**{title}**\n{url}"
     }
     response = requests.post(WEBHOOK_URL, json=data)
     if response.status_code not in [200, 204]:
         print("❌ Failed to send webhook:", response.text)
+        pass
 
 def main():
-    print("Webhook set:", bool(WEBHOOK_URL))
-    print("Gist ID set:", bool(GIST_ID))
-    print("Gist token set:", bool(GITHUB_TOKEN))
-    print(f"RSS feed URL: {FEED_URL}")
+    # print("Webhook set:", bool(WEBHOOK_URL))
+    # print("Gist ID set:", bool(GIST_ID))
+    # print("Gist token set:", bool(GITHUB_TOKEN))
+    # print(f"RSS feed URL: {FEED_URL}")
 
-    # Fetch raw RSS feed directly
-    print("Fetching raw RSS...")
     response = requests.get(FEED_URL)
-    print("HTTP status:", response.status_code)
-    print("Feed content preview (first 500 chars):")
-    print(response.text[:500])  # Preview some of the raw XML
+    # print("HTTP status:", response.status_code)
+    # print("Feed content preview (first 500 chars):")
+    # print(response.text[:500])
 
     feed = feedparser.parse(response.content)
-    print(f"Parsed {len(feed.entries)} entries.")
+    # print(f"Parsed {len(feed.entries)} entries.")
 
-    for entry in feed.entries:
-        print(f"- {entry.title} | ID: {entry.yt_videoid}")
+    # for entry in feed.entries:
+    #     print(f"- {entry.title} | ID: {entry.yt_videoid}")
 
     if not feed.entries:
         print("No videos found.")
@@ -81,6 +81,7 @@ def main():
         save_last_video_id(video_id)
     else:
         print("No new video.")
+        pass
 
 if __name__ == "__main__":
     main()
