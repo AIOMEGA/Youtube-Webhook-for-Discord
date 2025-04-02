@@ -9,10 +9,11 @@ GIST_ID = os.environ.get("GIST_ID")
 GITHUB_TOKEN = os.environ.get("GIST_TOKEN")
 
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
-YOUTUBE_API_URL = (
+YOUTUBE_PLAYLIST_ITEMS_URL = (
     f"https://www.googleapis.com/youtube/v3/playlistItems"
-    f"?part=snippet&maxResults=1&playlistId={UPLOADS_PLAYLIST_ID}&key={YOUTUBE_API_KEY}"
+    f"?part=snippet&maxResults=5&playlistId={UPLOADS_PLAYLIST_ID}&key={YOUTUBE_API_KEY}"
 )
+YOUTUBE_VIDEO_DETAILS_URL = "https://www.googleapis.com/youtube/v3/videos"
 
 HEADERS = {
     "Authorization": f"token {GITHUB_TOKEN}",
@@ -37,33 +38,80 @@ def save_last_video_id(video_id):
     }
     requests.patch(GIST_API_URL, headers=HEADERS, json=data)
 
-# Has the webhook send a messge informing of an upload and @'ing a server role.
-def notify_discord(title, url):
+def notify_discord(title, url, video_type="Video"):
+    emoji = {
+        "Video": "📢",
+        "Short": "🎬",
+        "Live": "🔴"
+    }.get(video_type, "📢")
+
     data = {
-        "content": f"<@&1357010336791793805>\n📢 New video uploaded!\n**{title}**\n{url}"
+        "content": f"<@&1357010336791793805>\n{emoji} New **{video_type}** uploaded!\n**{title}**\n{url}"
     }
     requests.post(WEBHOOK_URL, json=data)
 
-def get_latest_video():
-    res = requests.get(YOUTUBE_API_URL)
+def get_video_type(video_id):
+    params = {
+        "part": "snippet,liveStreamingDetails",
+        "id": video_id,
+        "key": YOUTUBE_API_KEY
+    }
+    res = requests.get(YOUTUBE_VIDEO_DETAILS_URL, params=params)
     if res.status_code == 200:
         items = res.json().get("items", [])
-        if items:
-            video_id = items[0]["snippet"]["resourceId"]["videoId"]
-            title = items[0]["snippet"]["title"]
+        if not items:
+            return "Video"
+
+        video = items[0]
+        snippet = video.get("snippet", {})
+        live_details = video.get("liveStreamingDetails", {})
+
+        # Detect livestream
+        if live_details:
+            return "Live"
+
+        # Detect shorts by video URL format
+        # Technically this could be guessed by duration, but better to use format
+        if snippet.get("categoryId") == "22" and "/shorts/" in snippet.get("description", ""):
+            return "Short"
+
+    return "Video"
+
+def get_recent_videos():
+    res = requests.get(YOUTUBE_PLAYLIST_ITEMS_URL)
+    videos = []
+    if res.status_code == 200:
+        items = res.json().get("items", [])
+        for item in items:
+            snippet = item["snippet"]
+            video_id = snippet["resourceId"]["videoId"]
+            title = snippet["title"]
             url = f"https://www.youtube.com/watch?v={video_id}"
-            return video_id, title, url
-    return None, None, None
+            videos.append({
+                "id": video_id,
+                "title": title,
+                "url": url
+            })
+    return videos
 
 def main():
-    latest_id, title, url = get_latest_video()
-    if not latest_id:
+    last_id = get_last_video_id()
+    recent_videos = get_recent_videos()
+
+    if not recent_videos:
         return
 
-    last_id = get_last_video_id()
-    if latest_id != last_id:
-        notify_discord(title, url)
-        save_last_video_id(latest_id)
+    new_videos = []
+    for video in recent_videos:
+        if video["id"] == last_id:
+            break
+        new_videos.append(video)
+
+    if new_videos:
+        for video in reversed(new_videos):  # Oldest first
+            video_type = get_video_type(video["id"])
+            notify_discord(video["title"], video["url"], video_type)
+        save_last_video_id(recent_videos[0]["id"])
 
 if __name__ == "__main__":
     main()
