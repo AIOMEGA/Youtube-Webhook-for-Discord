@@ -1,0 +1,28 @@
+name: YouTube Check and Discord Notify
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Every 10 minutes
+  workflow_dispatch:
+
+jobs:
+  check-and-notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install feedparser requests
+
+      - name: Run script
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+          GITHUB_TOKEN_FOR_GIST: ${{ secrets.GIST_TOKEN }}
+        run: python youtube_notifier.py
