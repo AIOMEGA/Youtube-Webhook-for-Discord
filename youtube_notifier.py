@@ -2,7 +2,7 @@ import feedparser
 import requests
 import os
 
-YOUTUBE_CHANNEL_ID = "UCBR8-60-B28hp2BmDPdntcQ" #"UC7WYnIkI2Dz9ynsHm4IvwVg"
+YOUTUBE_CHANNEL_ID = "UC7WYnIkI2Dz9ynsHm4IvwVg"
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 GIST_ID = os.environ.get("GIST_ID")
 GITHUB_TOKEN = os.environ.get("GIST_TOKEN")
@@ -48,9 +48,17 @@ def main():
     print("Webhook set:", bool(WEBHOOK_URL))
     print("Gist ID set:", bool(GIST_ID))
     print("Gist token set:", bool(GITHUB_TOKEN))
+    print(f"RSS feed URL: {FEED_URL}")
 
-    feed = feedparser.parse(FEED_URL)
-    print(f"Found {len(feed.entries)} entries in the feed.")
+    # Fetch raw RSS feed directly
+    print("Fetching raw RSS...")
+    response = requests.get(FEED_URL)
+    print("HTTP status:", response.status_code)
+    print("Feed content preview (first 500 chars):")
+    print(response.text[:500])  # Preview some of the raw XML
+
+    feed = feedparser.parse(response.content)
+    print(f"Parsed {len(feed.entries)} entries.")
 
     for entry in feed.entries:
         print(f"- {entry.title} | ID: {entry.yt_videoid}")
