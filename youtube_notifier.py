@@ -2,7 +2,7 @@ import feedparser
 import requests
 import os
 
-YOUTUBE_CHANNEL_ID = "UC7WYnIkI2Dz9ynsHm4IvwVg"
+YOUTUBE_CHANNEL_ID = "UCBR8-60-B28hp2BmDPdntcQ" #"UC7WYnIkI2Dz9ynsHm4IvwVg"
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 GIST_ID = os.environ.get("GIST_ID")
 GITHUB_TOKEN = os.environ.get("GIST_TOKEN")
