@@ -48,8 +48,13 @@ def main():
     print("Webhook set:", bool(WEBHOOK_URL))
     print("Gist ID set:", bool(GIST_ID))
     print("Gist token set:", bool(GITHUB_TOKEN))
-    
+
     feed = feedparser.parse(FEED_URL)
+    print(f"Found {len(feed.entries)} entries in the feed.")
+
+    for entry in feed.entries:
+        print(f"- {entry.title} | ID: {entry.yt_videoid}")
+
     if not feed.entries:
         print("No videos found.")
         return
@@ -63,6 +68,7 @@ def main():
     print(f"Latest video ID: {video_id} | Last known ID: {last_id}")
 
     if video_id != last_id:
+        print("New video detected, sending webhook...")
         notify_discord(title, video_url)
         save_last_video_id(video_id)
     else:
